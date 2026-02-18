@@ -1,0 +1,30 @@
+{
+  "name": "ednevnik-backend",
+  "version": "1.0.0",
+  "description": "Web aplikacija za upis i pregled ocena u školi.\r Frontend: Vue.js  \r Backend: Node.js  \r Baza: PostgreSQL (Prisma)",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/filipvicentijevic99/ednevnik-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/filipvicentijevic99/ednevnik-backend/issues"
+  },
+  "homepage": "https://github.com/filipvicentijevic99/ednevnik-backend#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
