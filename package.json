@@ -20,11 +20,13 @@
   },
   "homepage": "https://github.com/filipvicentijevic99/ednevnik-backend#readme",
   "dependencies": {
+    "@prisma/client": "^7.4.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "prisma": "^7.4.0"
   }
 }

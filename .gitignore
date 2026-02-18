@@ -56,6 +56,9 @@ web_modules/
 # Optional stylelint cache
 .stylelintcache
 
+dev.db
+*.db
+
 # Optional REPL history
 .node_repl_history
 
@@ -137,3 +140,5 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+/src/generated/prisma
