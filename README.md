@@ -1,8 +1,8 @@
 # Elektronski dnevnik (E-Dnevnik)
 
 Web aplikacija za upis i pregled ocena u školi.
-Frontend: Vue.js  
-Backend: Node.js  
+Frontend: Vue.js
+Backend: Node.js
 Baza: PostgreSQL (Prisma)
 
 ## Uloge
@@ -33,12 +33,23 @@ Baza: PostgreSQL (Prisma)
 - PostgreSQL + Prisma
 - JWT autentifikacija
 
-## Pokretanje projekta (kasnije popuniti)
+## Pokretanje projekta
 ### Backend
-- TODO
+- Kopiraj `.env.example` u `.env`
+- Pokreni PostgreSQL:
+  - `docker compose up -d`
+- Primeni migracije:
+  - `npm run prisma:migrate`
+- Ubaci seed admin korisnika:
+  - `npm run prisma:seed`
+- Pokreni API:
+  - `npm run dev`
 
 ### Frontend
-- TODO
+- Frontend se nalazi u `../ednevnik-frontend`
+- Pokretanje:
+  - `npm install`
+  - `npm run dev`
 
 ## Roadmap (kratko)
 - [ ] Setup repo + baze + Prisma
