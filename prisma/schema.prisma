@@ -28,6 +28,8 @@ model User {
   role         Role     @default(STUDENT)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  studentEnrollment   StudentEnrollment? @relation("StudentEnrollmentStudent")
+  teachingAssignments TeachingAssignment[] @relation("TeachingAssignmentTeacher")
 }
 
 model SchoolClass {
@@ -35,6 +37,8 @@ model SchoolClass {
   name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  enrollments StudentEnrollment[]
+  teachingAssignments TeachingAssignment[]
 }
 
 model Subject {
@@ -42,4 +46,33 @@ model Subject {
   name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  teachingAssignments TeachingAssignment[]
+}
+
+model StudentEnrollment {
+  id        Int      @id @default(autoincrement())
+  studentId Int      @unique
+  classId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student   User       @relation("StudentEnrollmentStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  schoolClass SchoolClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId])
+}
+
+model TeachingAssignment {
+  id        Int      @id @default(autoincrement())
+  teacherId Int
+  classId   Int
+  subjectId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teacher   User       @relation("TeachingAssignmentTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  schoolClass SchoolClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject   Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, classId, subjectId])
+  @@index([classId])
+  @@index([subjectId])
 }

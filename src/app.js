@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 
+const { createAdminAssignmentsRouter } = require("./routes/admin.assignments.routes");
 const { createAuthRouter } = require("./routes/auth.routes");
 const { createAdminCatalogRouter } = require("./routes/admin.catalog.routes");
+const { createAdminEnrollmentsRouter } = require("./routes/admin.enrollments.routes");
 const { createAdminUsersRouter } = require("./routes/admin.users.routes");
 const { createRequireAuth } = require("./middlewares/requireAuth");
 const { requireRole } = require("./middlewares/requireRole");
@@ -58,6 +60,20 @@ function createApp({ prisma, jwtSecret, frontendOrigin }) {
       entityLabel: "Subject",
       emptyNameMessage: "Subject name is required.",
     })
+  );
+
+  app.use(
+    "/admin/enrollments",
+    requireAuth,
+    requireRole("ADMIN"),
+    createAdminEnrollmentsRouter({ prisma })
+  );
+
+  app.use(
+    "/admin/assignments",
+    requireAuth,
+    requireRole("ADMIN"),
+    createAdminAssignmentsRouter({ prisma })
   );
 
   app.use((err, req, res, next) => {

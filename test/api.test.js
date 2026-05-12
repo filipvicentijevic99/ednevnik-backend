@@ -30,6 +30,11 @@ function createCatalogDelegate(seedRecords = []) {
   let nextId = records.reduce((max, record) => Math.max(max, record.id), 0) + 1;
 
   return {
+    async findUnique({ where, select }) {
+      const record = records.find((candidate) => candidate.id === where.id);
+      return applySelect(record, select);
+    },
+
     async findMany({ select, orderBy } = {}) {
       let results = records.map((record) => ({ ...record }));
 
@@ -80,6 +85,146 @@ function createCatalogDelegate(seedRecords = []) {
       record.updatedAt = new Date().toISOString();
 
       return applySelect(record, select);
+    },
+
+    async delete({ where }) {
+      const index = records.findIndex((candidate) => candidate.id === where.id);
+
+      if (index === -1) {
+        throw createPrismaError("P2025");
+      }
+
+      records.splice(index, 1);
+    },
+  };
+}
+
+function createEnrollmentDelegate(seedRecords = []) {
+  const records = seedRecords.map((record) => ({ ...record }));
+  let nextId = records.reduce((max, record) => Math.max(max, record.id), 0) + 1;
+
+  return {
+    async findMany({ orderBy } = {}) {
+      let results = records.map((record) => ({ ...record }));
+
+      if (orderBy && orderBy.id === "asc") {
+        results = results.sort((left, right) => left.id - right.id);
+      }
+
+      return results;
+    },
+
+    async create({ data }) {
+      const existing = records.find((record) => record.studentId === data.studentId);
+
+      if (existing) {
+        throw createPrismaError("P2002");
+      }
+
+      const timestamp = new Date().toISOString();
+      const record = {
+        id: nextId++,
+        studentId: data.studentId,
+        classId: data.classId,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+
+      records.push(record);
+      return { ...record };
+    },
+
+    async update({ where, data }) {
+      const record = records.find((candidate) => candidate.id === where.id);
+
+      if (!record) {
+        throw createPrismaError("P2025");
+      }
+
+      record.classId = data.classId;
+      record.updatedAt = new Date().toISOString();
+
+      return { ...record };
+    },
+
+    async delete({ where }) {
+      const index = records.findIndex((candidate) => candidate.id === where.id);
+
+      if (index === -1) {
+        throw createPrismaError("P2025");
+      }
+
+      records.splice(index, 1);
+    },
+  };
+}
+
+function createTeachingAssignmentDelegate(seedRecords = []) {
+  const records = seedRecords.map((record) => ({ ...record }));
+  let nextId = records.reduce((max, record) => Math.max(max, record.id), 0) + 1;
+
+  return {
+    async findMany({ orderBy } = {}) {
+      let results = records.map((record) => ({ ...record }));
+
+      if (orderBy && orderBy.id === "asc") {
+        results = results.sort((left, right) => left.id - right.id);
+      }
+
+      return results;
+    },
+
+    async create({ data }) {
+      const duplicate = records.find(
+        (record) =>
+          record.teacherId === data.teacherId &&
+          record.classId === data.classId &&
+          record.subjectId === data.subjectId
+      );
+
+      if (duplicate) {
+        throw createPrismaError("P2002");
+      }
+
+      const timestamp = new Date().toISOString();
+      const record = {
+        id: nextId++,
+        teacherId: data.teacherId,
+        classId: data.classId,
+        subjectId: data.subjectId,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+
+      records.push(record);
+      return { ...record };
+    },
+
+    async update({ where, data }) {
+      const record = records.find((candidate) => candidate.id === where.id);
+
+      if (!record) {
+        throw createPrismaError("P2025");
+      }
+
+      const duplicate = records.find(
+        (candidate) =>
+          candidate.id !== where.id &&
+          candidate.teacherId === data.teacherId &&
+          candidate.classId === data.classId &&
+          candidate.subjectId === data.subjectId
+      );
+
+      if (duplicate) {
+        throw createPrismaError("P2002");
+      }
+
+      record.teacherId = data.teacherId;
+      record.classId = data.classId;
+      record.subjectId = data.subjectId;
+      record.updatedAt = new Date().toISOString();
+
+      return { ...record };
     },
 
     async delete({ where }) {
@@ -149,6 +294,8 @@ function createPrismaStub(seed = {}) {
     },
     schoolClass: createCatalogDelegate(seedData.classes || []),
     subject: createCatalogDelegate(seedData.subjects || []),
+    studentEnrollment: createEnrollmentDelegate(seedData.enrollments || []),
+    teachingAssignment: createTeachingAssignmentDelegate(seedData.assignments || []),
   };
 }
 
@@ -582,6 +729,294 @@ test("PATCH /admin/subjects updates the subject name", async () => {
 
     assert.equal(response.status, 200);
     assert.equal(payload.name, "Advanced Mathematics");
+  } finally {
+    await app.close();
+  }
+});
+
+test("POST /admin/enrollments creates an enrollment for a student", async () => {
+  const app = await createTestApp({
+    users: [
+      {
+        id: 1,
+        name: "Admin",
+        email: "admin@ednevnik.local",
+        passwordHash: "unused",
+        role: "ADMIN",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 2,
+        name: "Student One",
+        email: "student1@school.local",
+        passwordHash: "unused",
+        role: "STUDENT",
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    classes: [
+      { id: 10, name: "I-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+  });
+
+  try {
+    const token = jwt.sign({ sub: "1" }, TEST_JWT_SECRET, { expiresIn: "2h" });
+    const { response, payload } = await app.request("/admin/enrollments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ studentId: 2, classId: 10 }),
+    });
+
+    assert.equal(response.status, 201);
+    assert.equal(payload.student.email, "student1@school.local");
+    assert.equal(payload.class.name, "I-1");
+  } finally {
+    await app.close();
+  }
+});
+
+test("POST /admin/enrollments rejects non-student users", async () => {
+  const app = await createTestApp({
+    users: [
+      {
+        id: 1,
+        name: "Admin",
+        email: "admin@ednevnik.local",
+        passwordHash: "unused",
+        role: "ADMIN",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 3,
+        name: "Teacher",
+        email: "teacher@school.local",
+        passwordHash: "unused",
+        role: "TEACHER",
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    classes: [
+      { id: 10, name: "I-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+  });
+
+  try {
+    const token = jwt.sign({ sub: "1" }, TEST_JWT_SECRET, { expiresIn: "2h" });
+    const { response, payload } = await app.request("/admin/enrollments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ studentId: 3, classId: 10 }),
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.message, "Selected user must be a student.");
+  } finally {
+    await app.close();
+  }
+});
+
+test("PATCH /admin/enrollments moves a student to another class", async () => {
+  const app = await createTestApp({
+    users: [
+      {
+        id: 1,
+        name: "Admin",
+        email: "admin@ednevnik.local",
+        passwordHash: "unused",
+        role: "ADMIN",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 2,
+        name: "Student One",
+        email: "student1@school.local",
+        passwordHash: "unused",
+        role: "STUDENT",
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    classes: [
+      { id: 10, name: "I-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 11, name: "I-2", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+    enrollments: [
+      { id: 20, studentId: 2, classId: 10, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+  });
+
+  try {
+    const token = jwt.sign({ sub: "1" }, TEST_JWT_SECRET, { expiresIn: "2h" });
+    const { response, payload } = await app.request("/admin/enrollments/20", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ classId: 11 }),
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.class.name, "I-2");
+  } finally {
+    await app.close();
+  }
+});
+
+test("POST /admin/assignments creates a teaching assignment", async () => {
+  const app = await createTestApp({
+    users: [
+      {
+        id: 1,
+        name: "Admin",
+        email: "admin@ednevnik.local",
+        passwordHash: "unused",
+        role: "ADMIN",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 5,
+        name: "Teacher One",
+        email: "teacher1@school.local",
+        passwordHash: "unused",
+        role: "TEACHER",
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    classes: [
+      { id: 10, name: "I-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+    subjects: [
+      { id: 7, name: "Mathematics", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+  });
+
+  try {
+    const token = jwt.sign({ sub: "1" }, TEST_JWT_SECRET, { expiresIn: "2h" });
+    const { response, payload } = await app.request("/admin/assignments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ teacherId: 5, classId: 10, subjectId: 7 }),
+    });
+
+    assert.equal(response.status, 201);
+    assert.equal(payload.teacher.email, "teacher1@school.local");
+    assert.equal(payload.subject.name, "Mathematics");
+  } finally {
+    await app.close();
+  }
+});
+
+test("POST /admin/assignments rejects non-teacher users", async () => {
+  const app = await createTestApp({
+    users: [
+      {
+        id: 1,
+        name: "Admin",
+        email: "admin@ednevnik.local",
+        passwordHash: "unused",
+        role: "ADMIN",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 6,
+        name: "Student One",
+        email: "student1@school.local",
+        passwordHash: "unused",
+        role: "STUDENT",
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    classes: [
+      { id: 10, name: "I-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+    subjects: [
+      { id: 7, name: "Mathematics", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+  });
+
+  try {
+    const token = jwt.sign({ sub: "1" }, TEST_JWT_SECRET, { expiresIn: "2h" });
+    const { response, payload } = await app.request("/admin/assignments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ teacherId: 6, classId: 10, subjectId: 7 }),
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.message, "Selected user must be a teacher.");
+  } finally {
+    await app.close();
+  }
+});
+
+test("PATCH /admin/assignments updates an existing assignment", async () => {
+  const app = await createTestApp({
+    users: [
+      {
+        id: 1,
+        name: "Admin",
+        email: "admin@ednevnik.local",
+        passwordHash: "unused",
+        role: "ADMIN",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 5,
+        name: "Teacher One",
+        email: "teacher1@school.local",
+        passwordHash: "unused",
+        role: "TEACHER",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 8,
+        name: "Teacher Two",
+        email: "teacher2@school.local",
+        passwordHash: "unused",
+        role: "TEACHER",
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    classes: [
+      { id: 10, name: "I-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 11, name: "I-2", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+    subjects: [
+      { id: 7, name: "Mathematics", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 9, name: "Physics", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+    assignments: [
+      { id: 30, teacherId: 5, classId: 10, subjectId: 7, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+  });
+
+  try {
+    const token = jwt.sign({ sub: "1" }, TEST_JWT_SECRET, { expiresIn: "2h" });
+    const { response, payload } = await app.request("/admin/assignments/30", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ teacherId: 8, classId: 11, subjectId: 9 }),
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.teacher.email, "teacher2@school.local");
+    assert.equal(payload.class.name, "I-2");
+    assert.equal(payload.subject.name, "Physics");
   } finally {
     await app.close();
   }
