@@ -1,23 +1,44 @@
 const jwt = require("jsonwebtoken");
+const { selectPublicUser } = require("../utils/users");
 
-function requireAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  const [type, token] = header.split(" ");
+function createRequireAuth({ prisma, jwtSecret }) {
+  return async function requireAuth(req, res, next) {
+    const header = req.headers.authorization || "";
+    const [type, token] = header.split(" ");
 
-  if (type !== "Bearer" || !token) {
-    return res.status(401).json({ message: "Unauthorized." });
-  }
+    if (type !== "Bearer" || !token) {
+      return res.status(401).json({ message: "Unauthorized." });
+    }
 
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = {
-      id: Number(payload.sub),
-      role: payload.role,
-    };
-    next();
-  } catch {
-    return res.status(401).json({ message: "Invalid or expired token." });
-  }
+    try {
+      const payload = jwt.verify(token, jwtSecret);
+      const userId = Number(payload.sub);
+
+      if (!Number.isInteger(userId) || userId <= 0) {
+        return res.status(401).json({ message: "Invalid or expired token." });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      if (!user) {
+        return res.status(401).json({ message: "Invalid or expired token." });
+      }
+
+      req.user = selectPublicUser(user);
+      next();
+    } catch {
+      return res.status(401).json({ message: "Invalid or expired token." });
+    }
+  };
 }
 
-module.exports = { requireAuth };
+module.exports = { createRequireAuth };

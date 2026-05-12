@@ -1,24 +1,26 @@
 require("dotenv").config();
 
-const { PrismaPg } = require("@prisma/adapter-pg");
 const bcrypt = require("bcryptjs");
-const { PrismaClient } = require("@prisma/client");
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter });
+const { getConfig } = require("../src/config");
+const { createPrismaClient } = require("../src/db/prisma");
+const { normalizeEmail } = require("../src/utils/users");
+
+const config = getConfig();
+const prisma = createPrismaClient({ connectionString: config.databaseUrl });
 
 async function main() {
-  const email = "admin@ednevnik.local";
+  const email = normalizeEmail("admin@ednevnik.local");
   const password = "Admin123!";
 
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.user.upsert({
     where: { email },
-    update: {},
+    update: { name: "Admin", passwordHash, role: "ADMIN" },
     create: { name: "Admin", email, passwordHash, role: "ADMIN" },
   });
 
-  console.log("✅ Seed OK:", email, password);
+  console.log("Seed OK:", email, password);
 }
 
 main()

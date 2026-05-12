@@ -1,44 +1,40 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { prisma } = require("../db/prisma");
+const { normalizeEmail, selectPublicUser } = require("../utils/users");
 
-const router = express.Router();
+function createAuthRouter({ prisma, jwtSecret }) {
+  const router = express.Router();
 
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body || {};
+  router.post("/login", async (req, res) => {
+    const { email, password } = req.body || {};
+    const normalizedEmail = normalizeEmail(email);
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required." });
-  }
+    if (!normalizedEmail || typeof password !== "string" || password.length === 0) {
+      return res.status(400).json({ message: "Email and password are required." });
+    }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
-  if (!user) {
-    return res.status(401).json({ message: "Invalid credentials." });
-  }
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
 
-  const valid = await bcrypt.compare(password, user.passwordHash);
+    const valid = await bcrypt.compare(password, user.passwordHash);
 
-  if (!valid) {
-    return res.status(401).json({ message: "Invalid credentials." });
-  }
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
 
-  const token = jwt.sign(
-    { sub: user.id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "2h" }
-  );
+    const token = jwt.sign({ sub: String(user.id) }, jwtSecret, { expiresIn: "2h" });
 
-  res.json({
-    accessToken: token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    res.json({
+      accessToken: token,
+      user: selectPublicUser(user),
+    });
   });
-});
 
-module.exports = { authRouter: router };
+  return router;
+}
+
+module.exports = { createAuthRouter };
