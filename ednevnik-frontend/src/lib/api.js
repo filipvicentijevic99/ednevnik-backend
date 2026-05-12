@@ -1,7 +1,9 @@
+import { clearStoredAuth, notifyUnauthorized, readStoredToken } from "./auth-storage";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 async function request(path, options = {}) {
-  const token = localStorage.getItem("ednevnik_token");
+  const token = readStoredToken();
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
@@ -17,8 +19,8 @@ async function request(path, options = {}) {
   });
 
   if (response.status === 401) {
-    localStorage.removeItem("ednevnik_token");
-    localStorage.removeItem("ednevnik_user");
+    clearStoredAuth();
+    notifyUnauthorized();
   }
 
   const contentType = response.headers.get("content-type") || "";
@@ -56,6 +58,46 @@ export const api = {
     return request("/admin/users", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  },
+  getClasses() {
+    return request("/admin/classes");
+  },
+  createClass(data) {
+    return request("/admin/classes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+  updateClass(id, data) {
+    return request(`/admin/classes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+  deleteClass(id) {
+    return request(`/admin/classes/${id}`, {
+      method: "DELETE",
+    });
+  },
+  getSubjects() {
+    return request("/admin/subjects");
+  },
+  createSubject(data) {
+    return request("/admin/subjects", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+  updateSubject(id, data) {
+    return request(`/admin/subjects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+  deleteSubject(id) {
+    return request(`/admin/subjects/${id}`, {
+      method: "DELETE",
     });
   },
 };

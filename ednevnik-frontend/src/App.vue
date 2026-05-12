@@ -9,6 +9,8 @@
       <nav v-if="auth.isAuthenticated" class="nav">
         <RouterLink to="/dashboard">Dashboard</RouterLink>
         <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/users">Users</RouterLink>
+        <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/classes">Classes</RouterLink>
+        <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/subjects">Subjects</RouterLink>
         <button class="secondary-button" type="button" @click="logout">
           Logout
         </button>
@@ -22,16 +24,27 @@
 </template>
 
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, onUnmounted } from "vue";
 import { RouterLink, RouterView, useRouter } from "vue-router";
 
+import { UNAUTHORIZED_EVENT } from "./lib/auth-storage";
 import { useAuthStore } from "./stores/auth";
 
 const auth = useAuthStore();
 const router = useRouter();
 
+function handleUnauthorized() {
+  auth.logout();
+  router.push("/login");
+}
+
 onMounted(() => {
   auth.hydrate();
+  window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+});
+
+onUnmounted(() => {
+  window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
 });
 
 function logout() {

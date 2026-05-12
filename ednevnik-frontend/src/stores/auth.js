@@ -2,9 +2,13 @@ import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 
 import { api } from "../lib/api";
-
-const TOKEN_KEY = "ednevnik_token";
-const USER_KEY = "ednevnik_user";
+import {
+  clearStoredAuth,
+  readStoredToken,
+  readStoredUser,
+  storeAuthSession,
+  storeUser,
+} from "../lib/auth-storage";
 
 export const useAuthStore = defineStore("auth", () => {
   const token = ref(null);
@@ -14,12 +18,16 @@ export const useAuthStore = defineStore("auth", () => {
 
   function hydrate() {
     if (!token.value) {
-      token.value = localStorage.getItem(TOKEN_KEY);
+      token.value = readStoredToken();
     }
 
     if (!user.value) {
-      const rawUser = localStorage.getItem(USER_KEY);
-      user.value = rawUser ? JSON.parse(rawUser) : null;
+      user.value = readStoredUser();
+    }
+
+    if (!token.value && user.value) {
+      user.value = null;
+      clearStoredAuth();
     }
   }
 
@@ -27,22 +35,20 @@ export const useAuthStore = defineStore("auth", () => {
     const payload = await api.login(credentials);
     token.value = payload.accessToken;
     user.value = payload.user;
-    localStorage.setItem(TOKEN_KEY, payload.accessToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
+    storeAuthSession({ token: payload.accessToken, user: payload.user });
   }
 
   async function refreshCurrentUser() {
     const payload = await api.getMe();
     user.value = payload.user;
-    localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
+    storeUser(payload.user);
     return payload.user;
   }
 
   function logout() {
     token.value = null;
     user.value = null;
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    clearStoredAuth();
   }
 
   return {

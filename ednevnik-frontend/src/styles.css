@@ -180,6 +180,12 @@ h2 {
   border-bottom: 1px solid #dce5ec;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .error {
   margin: 0;
   color: #9b1c1c;
@@ -193,6 +199,10 @@ h2 {
 .secondary-button {
   background: rgba(19, 34, 56, 0.1);
   color: #132238;
+}
+
+.danger-button {
+  background: #9b1c1c;
 }
 
 @media (max-width: 860px) {
