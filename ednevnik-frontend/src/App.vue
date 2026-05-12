@@ -11,6 +11,8 @@
         <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/users">Users</RouterLink>
         <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/classes">Classes</RouterLink>
         <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/subjects">Subjects</RouterLink>
+        <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/enrollments">Enrollments</RouterLink>
+        <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/assignments">Assignments</RouterLink>
         <button class="secondary-button" type="button" @click="logout">
           Logout
         </button>

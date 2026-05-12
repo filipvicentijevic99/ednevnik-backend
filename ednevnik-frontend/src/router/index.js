@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import { useAuthStore } from "../stores/auth";
+import AdminAssignmentsView from "../views/AdminAssignmentsView.vue";
 import AdminClassesView from "../views/AdminClassesView.vue";
+import AdminEnrollmentsView from "../views/AdminEnrollmentsView.vue";
 import AdminSubjectsView from "../views/AdminSubjectsView.vue";
 import AdminUsersView from "../views/AdminUsersView.vue";
 import DashboardView from "../views/DashboardView.vue";
@@ -40,6 +42,18 @@ const routes = [
     path: "/admin/subjects",
     name: "admin-subjects",
     component: AdminSubjectsView,
+    meta: { requiresAuth: true, roles: ["ADMIN"] },
+  },
+  {
+    path: "/admin/enrollments",
+    name: "admin-enrollments",
+    component: AdminEnrollmentsView,
+    meta: { requiresAuth: true, roles: ["ADMIN"] },
+  },
+  {
+    path: "/admin/assignments",
+    name: "admin-assignments",
+    component: AdminAssignmentsView,
     meta: { requiresAuth: true, roles: ["ADMIN"] },
   },
 ];

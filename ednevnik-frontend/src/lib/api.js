@@ -100,4 +100,44 @@ export const api = {
       method: "DELETE",
     });
   },
+  getEnrollments() {
+    return request("/admin/enrollments");
+  },
+  createEnrollment(data) {
+    return request("/admin/enrollments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+  updateEnrollment(id, data) {
+    return request(`/admin/enrollments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+  deleteEnrollment(id) {
+    return request(`/admin/enrollments/${id}`, {
+      method: "DELETE",
+    });
+  },
+  getAssignments() {
+    return request("/admin/assignments");
+  },
+  createAssignment(data) {
+    return request("/admin/assignments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+  updateAssignment(id, data) {
+    return request(`/admin/assignments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+  deleteAssignment(id) {
+    return request(`/admin/assignments/${id}`, {
+      method: "DELETE",
+    });
+  },
 };
