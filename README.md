@@ -1,96 +1,124 @@
 # Elektronski dnevnik (E-Dnevnik)
 
-Web aplikacija za upis i pregled ocena u školi.
-Frontend: Vue.js
-Backend: Node.js
-Baza: PostgreSQL (Prisma)
+Web aplikacija za unos i pregled školskih ocena. Ovaj deo projekta sadrži
+Express API, Prisma modele i migracije za PostgreSQL bazu podataka.
 
 ## Uloge
-- **Admin**: kreira odeljenja, predmete, profesore i učenike, dodeljuje profesore predmetima/odeljenjima
-- **Profesor**: unosi i menja ocene za dodeljena odeljenja/predmete
-- (Opcionalno) **Učenik/Roditelj**: read-only pregled ocena
 
-## Glavne funkcionalnosti (MVP)
-- Login + role-based access (ADMIN, TEACHER)
-- Admin panel:
-  - CRUD odeljenja
-  - CRUD predmeta
-  - kreiranje korisnika (profesor/učenik)
-  - upis učenika u odeljenje
-  - dodela profesora (odeljenje + predmet)
-- Profesor panel:
-  - pregled svojih dodela
-  - pregled dnevnika (odeljenje + predmet)
-  - unos/izmena/brisanje ocene
+- **Administrator (`ADMIN`)**: kreira odeljenja, predmete, profesore i učenike,
+  upisuje učenike u odeljenja, dodeljuje zaduženja profesorima i upravlja ocenama.
+- **Profesor (`TEACHER`)**: pregleda učenike i unosi, menja ili briše ocene za
+  odeljenja i predmete koji su mu dodeljeni.
+- **Učenik (`STUDENT`)**: može da se prijavi; pregled sopstvenih ocena je planiran
+  za narednu fazu razvoja.
 
-## Pravila i dozvole
-- Profesor može da upravlja ocenama samo za **odeljenja/predmete koji su mu dodeljeni**
-- Admin ima pun pristup
+## Implementirane funkcionalnosti
 
-## Tech stack
-- Vue 3 + Vite + Pinia + Vue Router
-- Node.js + Express (ili NestJS)
-- PostgreSQL + Prisma
-- JWT autentifikacija
+- Prijava pomoću JWT tokena i kontrola pristupa prema ulozi korisnika.
+- Kreiranje i pregled korisnika.
+- Kreiranje, pregled, izmena i brisanje odeljenja i predmeta.
+- Upis učenika u odeljenje i promena odeljenja.
+- Dodela profesora odeljenjima i predmetima.
+- Pregled dnevnika sa spiskom učenika i unetim ocenama.
+- Unos, izmena i brisanje ocena od 1 do 5, sa datumom i opcionom beleškom.
 
-## Pokretanje projekta
-### Backend
-- Kopiraj `.env.example` u `.env`
-- Pokreni PostgreSQL:
-  - `docker compose up -d`
-- Primeni migracije:
-  - `npm run prisma:migrate`
-- Ubaci seed admin korisnika:
-  - `npm run prisma:seed`
-- Pokreni API:
-  - `npm run dev`
+## Tehnologije
 
-### Frontend
-- Frontend se nalazi u `../ednevnik-frontend`
-- Pokretanje:
-  - `npm install`
-  - `npm run dev`
+- Frontend: Vue 3, Vite, Pinia i Vue Router.
+- Backend: Node.js i Express.
+- Baza podataka: PostgreSQL i Prisma.
+- Autentifikacija: JWT.
 
-## Gradebook API
+## Lokalno pokretanje
 
-Admins and teachers can access these routes. Teachers are restricted to their
-current teaching assignments; admins can access all assignments.
+Potrebni su Node.js sa podrškom za `--experimental-test-isolation=none` i pokrenut
+Docker Desktop. Komande ispod namenjene su PowerShell terminalu i pokreću se
+iz direktorijuma `ednevnik-backend`. Koristi se `npm.cmd` da bi komande radile
+i kada je izvršavanje `npm.ps1` skripte blokirano.
 
-- `GET /gradebook/assignments`: available class/subject assignments.
-- `GET /gradebook/assignments/:assignmentId`: current roster and recorded grades.
-- `POST /gradebook/assignments/:assignmentId/grades`: create a grade with
-  `studentId`, integer `value` (1–5), `gradedOn` (`YYYY-MM-DD`), and optional `note`
-  (up to 500 characters).
-- `PATCH /gradebook/assignments/:assignmentId/grades/:gradeId`: supply `value`,
-  `gradedOn`, and optional `note` to edit a grade. Student and original author
-  cannot be changed through this endpoint.
-- `DELETE /gradebook/assignments/:assignmentId/grades/:gradeId`: delete a grade.
+```powershell
+npm.cmd ci
+# Kopiraj samo pri prvom podešavanju; sačuvaj postojeći .env.
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+docker compose up -d
+npm.cmd run prisma:generate
+npx.cmd prisma migrate deploy
+npm.cmd run prisma:seed
+npm.cmd run dev
+```
 
-New grades require a current enrollment. Existing grades stay with their
-original class and subject after transfers or assignment changes. Deleting an
-assignment does not delete grades; restoring a matching class/subject assignment
-makes those grades accessible again. Class/subject deletion returns `409` if
-grades exist. There is no school-year/term model or grade audit history yet.
+API je dostupan na http://localhost:3000. Provera rada servera:
+http://localhost:3000/health.
 
-## Verification
+Skripta za početne podatke kreira nalog `admin@ednevnik.local` ili mu ponovo
+postavlja lozinku na `Admin123!`. Ove podatke koristi samo za lokalni razvoj.
 
-Run `npm test` for the API stub tests. Run `npm run test:integration` with local
-PostgreSQL running to exercise all migrations and gradebook permissions against
-a real database. Integration tests create and remove a random schema, leaving
-application records untouched. `TEST_DATABASE_URL` overrides the `.env`
-`DATABASE_URL` for these tests.
+Nakon preuzimanja novih izmena pokreni `npm.cmd run prisma:generate` i
+`npx.cmd prisma migrate deploy` pre pokretanja API-ja. Za pravljenje novih
+migracija tokom razvoja koristi `npm run prisma:migrate`.
 
-After pulling changes, run `npm run prisma:generate` and
-`npx prisma migrate deploy` before starting the API.
+U kompletnom projektu frontend se nalazi u direktorijumu `../ednevnik-frontend`.
+U drugom terminalu, počev od direktorijuma `ednevnik-backend`, pokreni:
 
-## Roadmap
+```powershell
+cd ../ednevnik-frontend
+npm.cmd ci
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+npm.cmd run dev
+```
 
-- [x] Database, Prisma migrations, JWT authentication, and role checks
-- [x] Admin users, classes, subjects, enrollments, and teaching assignments
-- [x] Teacher/admin gradebook with grade creation, editing, and deletion
-- [x] API tests and PostgreSQL gradebook integration tests
-- [ ] Student read-only grades
-- [ ] School years, terms, and archive access
-- [ ] Password lifecycle, safe seeding, and login throttling
-- [ ] Grade audit history and final-grade rules
-- [ ] Deployment and backups
+Otvori http://localhost:5173. Ako si preuzeo samo backend sa grane `main`,
+uputstvo za kompletan projekat nalazi se u
+[README datoteci na grani master](https://github.com/filipvicentijevic99/ednevnik-backend/blob/master/README.md).
+
+## API za dnevnik
+
+Ovim rutama mogu da pristupe administratori i profesori. Profesori imaju pristup
+samo svojim trenutnim zaduženjima, dok administratori imaju pristup svim zaduženjima.
+
+- `GET /gradebook/assignments`: pregled dostupnih zaduženja za odeljenja i predmete.
+- `GET /gradebook/assignments/:assignmentId`: trenutni spisak učenika i unete ocene.
+- `POST /gradebook/assignments/:assignmentId/grades`: unos ocene uz `studentId`,
+  celobrojni `value` (1–5), `gradedOn` (`YYYY-MM-DD`) i opcionu belešku `note`
+  (do 500 znakova).
+- `PATCH /gradebook/assignments/:assignmentId/grades/:gradeId`: izmena ocene uz
+  `value`, `gradedOn` i opcionu belešku `note`. Učenik i prvobitni autor ocene
+  ne mogu da se promene kroz ovu rutu.
+- `DELETE /gradebook/assignments/:assignmentId/grades/:gradeId`: brisanje ocene.
+
+Za unos nove ocene učenik mora trenutno da bude upisan u izabrano odeljenje.
+Postojeće ocene ostaju vezane za prvobitno odeljenje i predmet nakon prelaska
+učenika ili promene zaduženja profesora. Brisanje zaduženja ne briše ocene;
+ponovna dodela istog odeljenja i predmeta omogućava pristup tim ocenama.
+Pokušaj brisanja odeljenja ili predmeta sa ocenama vraća status `409`.
+
+Školske godine, polugodišta i evidencija izmena ocena još nisu implementirani.
+Prikazani prosek je informativan i ne predstavlja zaključnu ocenu.
+
+## Provere
+
+Iz direktorijuma `ednevnik-backend` pokreni:
+
+```powershell
+npm.cmd test
+npm.cmd run test:integration
+```
+
+Prva komanda pokreće API testove sa simuliranom bazom. Integracioni testovi
+zahtevaju pokrenut PostgreSQL i proveravaju migracije i dozvole za dnevnik na
+stvarnoj bazi. Kreiraju privremenu šemu sa nasumičnim imenom i uklanjaju je po
+završetku, bez menjanja podataka aplikacije. Korisnik baze mora da ima dozvolu
+za kreiranje šema. Promenljiva `TEST_DATABASE_URL`, ako je postavljena, ima
+prednost nad vrednošću `DATABASE_URL` iz `.env` datoteke.
+
+## Plan razvoja
+
+- [x] Baza podataka, Prisma migracije, JWT autentifikacija i provera uloga
+- [x] Upravljanje korisnicima, odeljenjima, predmetima, upisima i zaduženjima
+- [x] Dnevnik za profesore i administratore sa unosom, izmenom i brisanjem ocena
+- [x] API testovi i integracioni testovi dnevnika sa PostgreSQL bazom
+- [ ] Pregled sopstvenih ocena za učenike, bez mogućnosti izmene
+- [ ] Školske godine, polugodišta i pristup arhivi
+- [ ] Promena i obnova lozinke, bezbedni početni podaci i ograničavanje pokušaja prijave
+- [ ] Evidencija izmena ocena i pravila za zaključivanje ocena
+- [ ] Objavljivanje aplikacije i rezervne kopije
