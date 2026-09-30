@@ -98,6 +98,9 @@ function createAdminCatalogRouter({
       await delegate.delete({ where: { id } });
       return res.status(204).send();
     } catch (error) {
+      if (error.code === "P2003") {
+        return res.status(409).json({ message: `${entityLabel} has recorded grades and cannot be deleted.` });
+      }
       if (isPrismaNotFoundError(error)) {
         return res.status(404).json({ message: notFoundMessage });
       }

@@ -8,6 +8,7 @@ const { createAdminEnrollmentsRouter } = require("./routes/admin.enrollments.rou
 const { createAdminUsersRouter } = require("./routes/admin.users.routes");
 const { createRequireAuth } = require("./middlewares/requireAuth");
 const { requireRole } = require("./middlewares/requireRole");
+const { createGradebookRouter } = require("./routes/gradebook.routes");
 
 function createApp({ prisma, jwtSecret, frontendOrigin }) {
   const app = express();
@@ -76,15 +77,17 @@ function createApp({ prisma, jwtSecret, frontendOrigin }) {
     createAdminAssignmentsRouter({ prisma })
   );
 
+  app.use("/gradebook", requireAuth, requireRole("ADMIN", "TEACHER"), createGradebookRouter({ prisma }));
+
   app.use((err, req, res, next) => {
-    console.error(err);
+    if (!err.status || err.status >= 500) console.error(err);
 
     if (res.headersSent) {
       return next(err);
     }
 
     res.status(err.status || 500).json({
-      message: err.message || "Internal server error.",
+      message: err.status && err.status < 500 ? err.message : "Internal server error.",
     });
   });
 

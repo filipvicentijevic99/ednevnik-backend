@@ -30,6 +30,8 @@ model User {
   updatedAt    DateTime @updatedAt
   studentEnrollment   StudentEnrollment? @relation("StudentEnrollmentStudent")
   teachingAssignments TeachingAssignment[] @relation("TeachingAssignmentTeacher")
+  receivedGrades Grade[] @relation("GradeStudent")
+  authoredGrades Grade[] @relation("GradeAuthor")
 }
 
 model SchoolClass {
@@ -39,6 +41,7 @@ model SchoolClass {
   updatedAt DateTime @updatedAt
   enrollments StudentEnrollment[]
   teachingAssignments TeachingAssignment[]
+  grades Grade[]
 }
 
 model Subject {
@@ -47,6 +50,29 @@ model Subject {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   teachingAssignments TeachingAssignment[]
+  grades Grade[]
+}
+
+model Grade {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  classId   Int
+  subjectId Int
+  authorId  Int
+  value     Int
+  note      String   @default("") @db.VarChar(500)
+  gradedOn  DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student   User @relation("GradeStudent", fields: [studentId], references: [id], onDelete: Restrict)
+  author    User @relation("GradeAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  schoolClass SchoolClass @relation(fields: [classId], references: [id], onDelete: Restrict)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  @@index([classId, subjectId, studentId])
+  @@index([studentId])
+  @@index([authorId])
+  @@index([subjectId])
 }
 
 model StudentEnrollment {
