@@ -1,0 +1,4 @@
+[submodule "ednevnik-backend"]
+	path = ednevnik-backend
+	url = https://github.com/filipvicentijevic99/ednevnik-backend.git
+	branch = main

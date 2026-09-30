@@ -8,8 +8,15 @@ import AdminSubjectsView from "../views/AdminSubjectsView.vue";
 import AdminUsersView from "../views/AdminUsersView.vue";
 import DashboardView from "../views/DashboardView.vue";
 import LoginView from "../views/LoginView.vue";
+import GradebookView from "../views/GradebookView.vue";
 
 const routes = [
+  {
+    path: "/gradebook",
+    name: "gradebook",
+    component: GradebookView,
+    meta: { requiresAuth: true, roles: ["ADMIN", "TEACHER"] },
+  },
   {
     path: "/",
     redirect: "/dashboard",

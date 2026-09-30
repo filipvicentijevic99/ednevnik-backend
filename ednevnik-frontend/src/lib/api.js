@@ -41,6 +41,25 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  getGradebookAssignments() {
+    return request("/gradebook/assignments");
+  },
+  getGradebook(id) {
+    return request(`/gradebook/assignments/${id}`);
+  },
+  createGrade(assignmentId, data) {
+    return request(`/gradebook/assignments/${assignmentId}/grades`, {
+      method: "POST", body: JSON.stringify(data),
+    });
+  },
+  updateGrade(assignmentId, gradeId, data) {
+    return request(`/gradebook/assignments/${assignmentId}/grades/${gradeId}`, {
+      method: "PATCH", body: JSON.stringify(data),
+    });
+  },
+  deleteGrade(assignmentId, gradeId) {
+    return request(`/gradebook/assignments/${assignmentId}/grades/${gradeId}`, { method: "DELETE" });
+  },
   login(credentials) {
     return request("/auth/login", {
       method: "POST",

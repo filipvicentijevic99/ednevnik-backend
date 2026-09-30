@@ -2,12 +2,13 @@
   <div class="shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">School Admin</p>
+        <p class="eyebrow">School journal</p>
         <h1>E-Dnevnik</h1>
       </div>
 
       <nav v-if="auth.isAuthenticated" class="nav">
         <RouterLink to="/dashboard">Dashboard</RouterLink>
+        <RouterLink v-if="['ADMIN', 'TEACHER'].includes(auth.user?.role)" to="/gradebook">Gradebook</RouterLink>
         <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/users">Users</RouterLink>
         <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/classes">Classes</RouterLink>
         <RouterLink v-if="auth.user?.role === 'ADMIN'" to="/admin/subjects">Subjects</RouterLink>
