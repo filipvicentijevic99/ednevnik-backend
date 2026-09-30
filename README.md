@@ -1,32 +1,33 @@
 # E-Dnevnik
 
-School journal with a Vue frontend, Express API, and PostgreSQL database.
+Web aplikacija za unos i pregled školskih ocena, sa Vue korisničkim interfejsom,
+Express API-jem i PostgreSQL bazom podataka.
 
-## Repository layout
+## Struktura repozitorijuma
 
-The `master` branch contains this workspace and the frontend. The backend is a
-submodule pointing to the `main` branch of the same GitHub repository.
+Grana `master` sadrži ovaj radni prostor i frontend. Backend je Git podmodul
+koji prati granu `main` istog GitHub repozitorijuma.
 
-Clone the complete project:
+Kloniranje kompletnog projekta:
 
 ```sh
 git clone --branch master --recurse-submodules https://github.com/filipvicentijevic99/ednevnik-backend.git e-dnevnik
 cd e-dnevnik
 ```
 
-For an existing clone, run `git submodule update --init`.
+Ako je repozitorijum već kloniran, pokreni `git submodule update --init`.
 
-## Run locally
+## Lokalno pokretanje
 
-Use a recent Node.js version that supports `--experimental-test-isolation=none`
-and start Docker Desktop. In PowerShell use `npm.cmd` if `npm.ps1` is blocked.
+Potrebni su Node.js sa podrškom za `--experimental-test-isolation=none` i pokrenut
+Docker Desktop. U PowerShell terminalu koristi `npm.cmd` ako je `npm.ps1` blokiran.
 
-Backend (first terminal):
+Backend (prvi terminal, iz korena projekta):
 
 ```powershell
 cd ednevnik-backend
 npm.cmd ci
-# Copy only on first setup; preserve an existing .env.
+# Kopiraj samo pri prvom podešavanju; sačuvaj postojeći .env.
 if (!(Test-Path .env)) { Copy-Item .env.example .env }
 docker compose up -d
 npm.cmd run prisma:generate
@@ -35,10 +36,10 @@ npm.cmd run prisma:seed
 npm.cmd run dev
 ```
 
-The current seed creates or resets `admin@ednevnik.local` with password
-`Admin123!`. Use these credentials only for local development.
+Trenutna skripta za početne podatke kreira nalog `admin@ednevnik.local` ili mu
+ponovo postavlja lozinku na `Admin123!`. Ove podatke koristi samo za lokalni razvoj.
 
-Frontend (second terminal, starting in the workspace root):
+Frontend (drugi terminal, iz korena projekta):
 
 ```powershell
 cd ednevnik-frontend
@@ -47,47 +48,50 @@ if (!(Test-Path .env)) { Copy-Item .env.example .env }
 npm.cmd run dev
 ```
 
-Open http://localhost:5173. The API runs at http://localhost:3000.
+Otvori http://localhost:5173. API je dostupan na http://localhost:3000.
 
-## Test the gradebook
+## Isprobavanje dnevnika
 
-1. Sign in as admin and create a class, subject, teacher, and student.
-2. Enroll the student in the class and assign the teacher to that class/subject.
-3. Open **Gradebook** as admin, or log in with the teacher's credentials.
-4. Choose the assignment, record a grade from 1–5 with a date and optional note,
-   then try editing or deleting it.
+1. Prijavi se kao administrator i kreiraj odeljenje, predmet, profesora i učenika.
+2. Upiši učenika u odeljenje i dodeli profesoru odeljenje i predmet.
+3. Otvori **Gradebook** kao administrator ili se prijavi pomoću naloga profesora.
+4. Izaberi dodeljeno odeljenje i predmet, unesi ocenu od 1 do 5 sa datumom i
+   opcionom beleškom, pa isprobaj izmenu ili brisanje ocene.
 
-Teachers only see their assignments. Admins can manage all assigned gradebooks.
-Recorded grades remain attached to their original class and subject when a
-student moves or a teaching assignment changes. Classes and subjects with grades
-cannot be deleted. Averages are informational; no final-grade calculation is defined.
+Profesori vide samo svoja zaduženja. Administratori mogu da upravljaju dnevnicima
+za sva dodeljena odeljenja i predmete. Unete ocene ostaju vezane za prvobitno
+odeljenje i predmet kada učenik promeni odeljenje ili se promeni zaduženje
+profesora. Odeljenja i predmeti sa unetim ocenama ne mogu da se obrišu. Prikazani
+prosek je informativan; pravila za zaključivanje ocena još nisu definisana.
 
-## Checks
+## Provere
 
-From `ednevnik-backend`:
+Iz direktorijuma `ednevnik-backend`:
 
 ```powershell
 npm.cmd test
 npm.cmd run test:integration
 ```
 
-Integration tests require PostgreSQL and use a temporary, randomly named schema
-that is removed afterward. They do not change application records. Set
-`TEST_DATABASE_URL` to use a separate test database; otherwise they use the local
-`DATABASE_URL` from `.env`. The database user needs permission to create schemas.
+Integracioni testovi zahtevaju PostgreSQL i koriste privremenu šemu sa nasumičnim
+imenom, koja se nakon testa uklanja. Ne menjaju podatke aplikacije. Za odvojenu
+test bazu postavi `TEST_DATABASE_URL`; u suprotnom se koristi lokalni
+`DATABASE_URL` iz `.env` datoteke. Korisnik baze mora da ima dozvolu za kreiranje šema.
 
-From `ednevnik-frontend`, run `npm.cmd run build`.
+Iz direktorijuma `ednevnik-frontend` pokreni `npm.cmd run build` da proveriš
+pripremu frontenda za objavljivanje.
 
-## Remaining milestones
+## Planirani naredni koraci
 
-- Student read-only grade view.
-- School years, terms, and archive access before using the journal across years.
-- Password changes/reset, safe initial admin provisioning, and login throttling.
-- Grade edit/deletion audit history and final-grade rules.
-- Deployment, backups, and browser end-to-end coverage.
+- Pregled sopstvenih ocena za učenike, bez mogućnosti izmene.
+- Školske godine, polugodišta i pristup arhivi pre korišćenja dnevnika tokom više godina.
+- Promena i obnova lozinke, bezbedno kreiranje početnog administratorskog naloga i ograničavanje pokušaja prijave.
+- Evidencija izmena i brisanja ocena, kao i pravila za zaključivanje ocena.
+- Objavljivanje aplikacije, rezervne kopije i testiranje celih korisničkih tokova u pregledaču.
 
-## Committing backend changes
+## Čuvanje i slanje izmena na GitHub
 
-Commit and push inside `ednevnik-backend` first. Then commit its updated submodule
-pointer together with frontend changes in the workspace root and push `master`.
-Both branches are required to retrieve the complete project.
+Prvo napravi commit i pošalji izmene iz direktorijuma `ednevnik-backend` na granu
+`main`. Zatim u korenu projekta napravi commit koji sadrži ažuriranu referencu
+podmodula i izmene frontenda, pa pošalji granu `master`. Obe grane su potrebne
+za preuzimanje kompletnog projekta.
